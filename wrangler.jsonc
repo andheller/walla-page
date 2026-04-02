@@ -8,10 +8,6 @@
     {
       "pattern": "walla.page",
       "custom_domain": true
-    },
-    {
-      "pattern": "www.walla.page",
-      "custom_domain": true
     }
   ],
   "durable_objects": {
@@ -27,6 +23,7 @@
     ]
   },
   "vars": {
+    "BASE_URL": "https://walla.page",
     "ROOM_IDLE_TTL_MS": "604800000",
     "CREATE_ROOM_LIMIT": "100",
     "CREATE_ROOM_WINDOW_MS": "600000",

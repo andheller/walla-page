@@ -185,60 +185,23 @@ function doc(title: string, body: string, config?: unknown, scriptPath?: string)
         height: 100%;
         border-radius: 20px;
         overflow: hidden;
-        background:
-          linear-gradient(145deg, rgba(255,99,33,0.22), rgba(255,99,33,0) 36%),
-          radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12), transparent 30%),
-          linear-gradient(180deg, #101010, #050505 72%);
+        background: #050505;
         border: 1px solid rgba(255,255,255,0.06);
       }
-      .hero-video::before {
-        content: "";
+      .hero-iframe-wrap {
         position: absolute;
         inset: 0;
-        background:
-          linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
-          linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
-        background-size: 18% 18%, 18% 18%;
-        opacity: 0.14;
+        overflow: hidden;
+        border-radius: inherit;
+        pointer-events: none;
       }
-      .hero-video::after {
-        content: "";
-        position: absolute;
-        inset: auto 12% 10% 12%;
-        height: 18%;
-        background: radial-gradient(circle, rgba(255,99,33,0.38), transparent 65%);
-        filter: blur(18px);
-      }
-      .hero-video-label {
-        position: absolute;
-        top: 24px;
-        left: 24px;
-        z-index: 1;
-        color: rgba(255,255,255,0.78);
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 11px;
-        letter-spacing: 0.22em;
-        text-transform: uppercase;
-      }
-      .hero-video-copy {
-        position: absolute;
-        left: 24px;
-        right: 24px;
-        bottom: 24px;
-        z-index: 1;
-        display: grid;
-        gap: 10px;
-      }
-      .hero-video-copy strong {
-        color: white;
-        font-size: 26px;
-        line-height: 1.05;
-        letter-spacing: -0.04em;
-      }
-      .hero-video-copy span {
-        color: rgba(255,255,255,0.6);
-        font-size: 14px;
-        max-width: 24ch;
+      .hero-iframe-wrap iframe {
+        width: 400%;
+        height: 400%;
+        border: none;
+        transform: scale(0.25);
+        transform-origin: top left;
+        pointer-events: none;
       }
       
       .section-heading { margin-bottom: 64px; }
@@ -519,9 +482,8 @@ export function landingPage(origin: string, presets: ScenePreset[]) {
         <div class="hero-media">
           <div class="hero-frame concentric-28 ring-border">
             <div class="hero-video">
-              <div class="hero-video-label">Room feed / live display</div>
-              <div class="hero-video-copy">
-                <strong>HTML scenes, voice alerts, and background loops on one wall.</strong>
+              <div class="hero-iframe-wrap">
+                <iframe data-demo-src="/examples/nebula" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe>
               </div>
             </div>
           </div>
@@ -639,7 +601,7 @@ export function displayPage(roomId: string) {
         <h1 style="font-size:clamp(52px,6vw,80px); font-weight:850; margin:0 0 20px; letter-spacing:-0.05em; line-height:1.05;">Your room&rsquo;s<br>live display.</h1>
         <p style="color:rgba(255,255,255,0.4); font-size:clamp(16px,1.6vw,20px); line-height:1.6; margin:0 0 40px; max-width:32ch; margin-left:auto; margin-right:auto; text-wrap:balance;">When someone activates a scene, it appears here fullscreen. This display needs one click before it can play sound.</p>
         <p id="display-status" style="color:rgba(255,255,255,0.25); font-size:clamp(13px,1.2vw,16px); line-height:1.6; margin:0 0 28px;"></p>
-        <button id="display-overlay" class="btn-primary" style="background:white; color:black; border:none; width:100%; font-size:clamp(15px,1.4vw,18px); font-weight:600;">Click to start wall</button>
+        <button id="display-overlay" class="btn-primary" style="background:white; color:black; border:none; width:100%; font-size:clamp(15px,1.4vw,18px); font-weight:600; padding:16px 28px; border-radius:12px; cursor:pointer; font-family:inherit; letter-spacing:-0.01em;">Click to start wall</button>
       </div>
       <iframe id="scene-frame" sandbox="allow-scripts" style="position:fixed; inset:0; width:100%; height:100%; border:0; display:none;"></iframe>
     </main>

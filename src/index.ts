@@ -131,9 +131,10 @@ app.post("/api/rooms", async (c) => {
   const roomId = shortId();
   const origin = originFromRequest(c.env, c.req.raw);
   const stub = roomStub(c.env, roomId);
-  const body = await c.req.json<{ displayLimit?: unknown }>().catch(() => null);
+  const body = await c.req.json<{ displayLimit?: unknown; publicDisplay?: unknown }>().catch(() => null);
   const initPayload = {
-    displayLimit: body?.displayLimit
+    displayLimit: body?.displayLimit,
+    publicDisplay: body?.publicDisplay ?? true
   };
 
   await stub.fetch(new Request("https://room/internal/init", {

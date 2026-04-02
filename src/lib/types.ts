@@ -20,6 +20,7 @@ export type LoopState = {
 export type RoomSnapshot = {
   roomId: string;
   now: number;
+  publicDisplay: boolean;
   displayWsLimit: number | null;
   currentScene: SceneRecord | null;
   upcomingScenes: SceneRecord[];
@@ -35,7 +36,7 @@ export type RoomSnapshot = {
 export type PairResponse = {
   roomId: string;
   role: Role;
-  token: string;
+  token?: string;
   link?: string;
 };
 

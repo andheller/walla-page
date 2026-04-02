@@ -45,6 +45,9 @@ async function main() {
       case "show":
         await showOrSchedule("show", args);
         return;
+      case "push":
+        await showOrSchedule("show", args);
+        return;
       case "schedule":
         await showOrSchedule("schedule", args);
         return;
@@ -64,7 +67,7 @@ function printHelp() {
   console.log(`Walla Page CLI
 
 Usage:
-  walla create [--display-limit <n>] [--server <url>]
+  walla create [--display-limit <n>] [--private-display] [--server <url>]
   walla delete [--force]
   walla display
   walla config [--server <url>]
@@ -72,6 +75,7 @@ Usage:
   walla status
   walla quickstart
   walla show <file.html> [--title <title>] [--duration <seconds>]
+  walla push <file.html> [--title <title>] [--duration <seconds>]
   walla schedule <file.html> --at <time> [--title <title>] [--duration <seconds>]
   walla say <text> [--at <time>] [--title <title>] [--duration <seconds>] [--voice-id <id>] [--max-words <n>]
 
@@ -79,7 +83,9 @@ Notes:
   - HTML scene commands send raw HTML directly to the room runtime.
   - Times can be ISO timestamps, "now", or relative values like "+5m", "+30s", "+2h".
   - Set WALLA_SERVER or use --server to point the CLI at a different backend.
-  - The default CLI flow is create -> open display -> status/show/say. Use delete to remove a room and display to rotate the wall link.`);
+  - 'push' is an alias for 'show'.
+  - Rooms default to a public display link. Pass --private-display to require a display token.
+  - The default CLI flow is create -> open display -> status/show/say. Use delete to remove a room and display to rotate the wall link for private rooms.`);
 }
 
 function quickstart() {
@@ -106,10 +112,11 @@ async function createRoom(args) {
   const existing = await maybeCurrentRoom();
   const server = resolveServer(existing, flags.server);
   const displayLimit = parseDisplayLimitFlag(flags["display-limit"]);
+  const publicDisplay = !Boolean(flags["private-display"]);
   const created = await fetchJson(`${server}/api/rooms`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ displayLimit })
+    body: JSON.stringify({ displayLimit, publicDisplay })
   });
   const next = await upsertRoom({
     server,
@@ -127,12 +134,18 @@ async function createRoom(args) {
   } else {
     console.log("Display WS limit: unlimited");
   }
+  console.log(`Display access: ${publicDisplay ? "public" : "private"}`);
   console.log(`Display: ${created.display.link}`);
   await saveConfig(next);
 }
 
 async function displayLink() {
   const room = await requireCurrentRoom();
+  const snapshot = await api(room, "GET", `/api/rooms/${room.roomId}/state?token=${encodeURIComponent(room.token)}`);
+  if (snapshot.publicDisplay) {
+    console.log(`${room.server}/rooms/${room.roomId}`);
+    return;
+  }
   const pair = await api(room, "POST", `/api/rooms/${room.roomId}/pair`, { role: "display" });
   console.log(pair.link);
 }
@@ -197,6 +210,7 @@ async function status() {
   const snapshot = await api(room, "GET", `/api/rooms/${room.roomId}/state?token=${encodeURIComponent(room.token)}`);
   console.log(JSON.stringify({
     roomId: snapshot.roomId,
+    publicDisplay: snapshot.publicDisplay,
     displayWsLimit: snapshot.displayWsLimit,
     currentScene: snapshot.currentScene?.title ?? null,
     upcomingScenes: snapshot.upcomingScenes.length,

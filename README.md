@@ -50,7 +50,7 @@ This keeps the hackathon surface area small and testable.
 
 ## Core Capabilities
 
-- Show fullscreen HTML now (`show`)
+- Show fullscreen HTML now (`show`, alias: `push`)
 - Schedule fullscreen HTML for later (`schedule`)
 - Generate ElevenLabs speech and schedule it (`say`)
 - Delete room state and disconnect clients (`delete`, `delete --force`)
@@ -84,6 +84,7 @@ One room contains:
 
 Displays are multi-screen by default.
 
+- Default: public display link per room
 - Default: unlimited display websocket connections per room
 - Optional cap at room creation via `displayLimit`
 - When capped and full, new display ws attempts return `429`
@@ -91,8 +92,10 @@ Displays are multi-screen by default.
 CLI flag:
 
 - `walla create --display-limit <n>`
+- `walla create --private-display`
 - `n >= 1` sets a cap
 - `0` means unlimited
+- `--private-display` requires a display token instead of a bare room link
 
 ## Alarm + Lifecycle
 
@@ -135,7 +138,7 @@ npm run walla -- help
 
 Commands:
 
-- `walla create [--display-limit <n>]`
+- `walla create [--display-limit <n>] [--private-display]`
 - `walla delete [--force]`
 - `walla display`
 - `walla config`
@@ -143,6 +146,7 @@ Commands:
 - `walla status`
 - `walla quickstart`
 - `walla show <file.html> [--title <title>] [--duration <seconds>]`
+- `walla push <file.html> [--title <title>] [--duration <seconds>]`
 - `walla schedule <file.html> --at <time> [--title <title>] [--duration <seconds>]`
 - `walla say <text> [--at <time>] [--title <title>] [--duration <seconds>] [--voice-id <id>] [--max-words <n>]`
 
@@ -172,20 +176,24 @@ Create payload:
 
 ```json
 {
-  "displayLimit": 0
+  "displayLimit": 0,
+  "publicDisplay": true
 }
 ```
 
 - `displayLimit >= 1`: cap displays
 - `displayLimit = 0` or omitted: unlimited
+- `publicDisplay = true` or omitted: bare room display link
+- `publicDisplay = false`: token-protected display link
 
 Display route:
 
-- `GET /rooms/:roomId/display?token=...`
+- Public: `GET /rooms/:roomId`
+- Private: `GET /rooms/:roomId?token=...`
 
 Built-in audio route (allow-listed asset endpoint):
 
-- `GET /audio/campfire.mp3`
+- `GET /audio/campfire-demo.mp3`
 
 ## Quickstart
 
@@ -215,6 +223,7 @@ Drive the room:
 ```bash
 npm run walla -- status
 npm run walla -- show ./examples/campfire.html --duration 120
+npm run walla -- push ./examples/campfire.html --duration 120
 npm run walla -- say "Dinner in five minutes."
 npm run walla -- delete
 # if displays are still connected:

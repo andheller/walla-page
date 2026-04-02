@@ -27,6 +27,11 @@ type TokenRow = {
   expires_at: number;
 };
 
+type AuthResult = {
+  role: Role;
+  token: string | null;
+};
+
 export class RoomDO implements DurableObject {
   private ctx: DurableObjectState;
   private env: Env;
@@ -193,7 +198,7 @@ export class RoomDO implements DurableObject {
   }
 
   private async handleInit(request: Request) {
-    const body = await this.readJson<{ displayLimit?: unknown }>(request);
+    const body = await this.readJson<{ displayLimit?: unknown; publicDisplay?: unknown }>(request);
     if (body && "displayLimit" in body) {
       const parsed = parseDisplayLimit(body.displayLimit);
       if (!parsed.ok) {
@@ -201,7 +206,19 @@ export class RoomDO implements DurableObject {
       }
       this.setDisplayWsLimit(parsed.value);
     }
-    return this.json({ ok: true, roomId: this.roomId, displayWsLimit: this.getDisplayWsLimit() });
+    if (body && "publicDisplay" in body) {
+      const parsed = parsePublicDisplay(body.publicDisplay);
+      if (!parsed.ok) {
+        return this.json({ error: parsed.error }, 400);
+      }
+      this.setPublicDisplay(parsed.value);
+    }
+    return this.json({
+      ok: true,
+      roomId: this.roomId,
+      displayWsLimit: this.getDisplayWsLimit(),
+      publicDisplay: this.getPublicDisplay()
+    });
   }
 
   private async handlePair(request: Request) {
@@ -227,18 +244,34 @@ export class RoomDO implements DurableObject {
     if (requiredRole && requiredRole !== "display" && requiredRole !== "producer") {
       return this.json({ error: "invalid role" }, 400);
     }
+    if (requiredRole === "display") {
+      const auth = this.authorizeDisplay(request);
+      if (auth instanceof Response) {
+        return auth;
+      }
+      return this.json({ ok: true, role: auth.role, publicDisplay: auth.token === null });
+    }
     const roles = requiredRole ? [requiredRole as Role] : undefined;
     const auth = this.requireToken(request, roles);
     if (auth instanceof Response) {
       return auth;
     }
-    return this.json({ ok: true, role: auth.role });
+    return this.json({ ok: true, role: auth.role, publicDisplay: false });
   }
 
   private issuePair(body: { role?: Role; origin?: string }) {
     const role = body.role;
     if (role !== "display" && role !== "producer") {
       return this.json({ error: "invalid role" }, 400);
+    }
+
+    if (role === "display" && this.getPublicDisplay()) {
+      const response: PairResponse = {
+        roomId: this.roomId!,
+        role,
+        link: `${body.origin}/rooms/${this.roomId}`
+      };
+      return this.json(response);
     }
 
     if (role === "display") {
@@ -470,7 +503,7 @@ export class RoomDO implements DurableObject {
   }
 
   private async handleWebSocket(request: Request) {
-    const auth = this.requireToken(request);
+    const auth = this.authorizeSocket(request);
     if (auth instanceof Response) {
       return auth;
     }
@@ -529,6 +562,30 @@ export class RoomDO implements DurableObject {
     return found;
   }
 
+  private authorizeDisplay(request: Request): AuthResult | Response {
+    const token = this.extractToken(request);
+    if (!token && this.getPublicDisplay()) {
+      return { role: "display", token: null };
+    }
+    const auth = this.requireToken(request, ["display"]);
+    if (auth instanceof Response) {
+      return auth;
+    }
+    return { role: auth.role, token: auth.token };
+  }
+
+  private authorizeSocket(request: Request): AuthResult | Response {
+    const token = this.extractToken(request);
+    if (!token && this.getPublicDisplay()) {
+      return { role: "display", token: null };
+    }
+    const auth = this.requireToken(request);
+    if (auth instanceof Response) {
+      return auth;
+    }
+    return { role: auth.role, token: auth.token };
+  }
+
   private extractToken(request: Request) {
     const auth = request.headers.get("authorization");
     if (auth?.startsWith("Bearer ")) {
@@ -563,6 +620,7 @@ export class RoomDO implements DurableObject {
     return {
       roomId: this.roomId!,
       now: Date.now(),
+      publicDisplay: this.getPublicDisplay(),
       displayWsLimit: this.getDisplayWsLimit(),
       currentScene: this.getCurrentScene(),
       upcomingScenes: this.sql
@@ -702,6 +760,20 @@ export class RoomDO implements DurableObject {
     return parsed.ok ? parsed.value : null;
   }
 
+  private getPublicDisplay() {
+    const stored = row<{ value: string }>(
+      this.sql.exec(
+        `SELECT value
+         FROM room_settings
+         WHERE key = 'public_display'`
+      )
+    );
+    if (!stored) {
+      return false;
+    }
+    return stored.value === "1";
+  }
+
   private setDisplayWsLimit(limit: number | null) {
     if (limit === null) {
       this.sql.exec(`DELETE FROM room_settings WHERE key = 'display_ws_limit'`);
@@ -712,6 +784,15 @@ export class RoomDO implements DurableObject {
        VALUES ('display_ws_limit', ?)
        ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
       String(limit)
+    );
+  }
+
+  private setPublicDisplay(value: boolean) {
+    this.sql.exec(
+      `INSERT INTO room_settings (key, value)
+       VALUES ('public_display', ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      value ? "1" : "0"
     );
   }
 
@@ -866,6 +947,13 @@ function parseDisplayLimit(value: unknown): { ok: true; value: number | null } |
     return { ok: false, error: "displayLimit must be an integer >= 1, or 0 for unlimited" };
   }
   return { ok: true, value: parsed };
+}
+
+function parsePublicDisplay(value: unknown): { ok: true; value: boolean } | { ok: false; error: string } {
+  if (typeof value !== "boolean") {
+    return { ok: false, error: "publicDisplay must be a boolean" };
+  }
+  return { ok: true, value };
 }
 
 function bufferToBase64(buffer: ArrayBuffer) {

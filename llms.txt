@@ -51,6 +51,7 @@ walla create
 walla display
 walla status
 walla show ./scene.html
+walla push ./scene.html
 walla schedule ./scene.html --at +10m
 walla say "Build finished."
 walla delete

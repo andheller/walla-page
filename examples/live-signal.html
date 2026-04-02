@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Live Signal</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #04131a;
+        --panel: rgba(7, 28, 37, 0.78);
+        --line: rgba(120, 240, 220, 0.18);
+        --text: #ecfff8;
+        --muted: rgba(236, 255, 248, 0.68);
+        --accent: #78f0dc;
+        --accent-2: #ffb85c;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 20% 20%, rgba(120, 240, 220, 0.18), transparent 28%),
+          radial-gradient(circle at 78% 26%, rgba(255, 184, 92, 0.14), transparent 24%),
+          linear-gradient(135deg, #02090d 0%, var(--bg) 48%, #08212b 100%);
+        color: var(--text);
+        font-family: "Inter", "Segoe UI", sans-serif;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 72px 72px;
+        opacity: 0.45;
+        mask-image: radial-gradient(circle at center, black 38%, transparent 90%);
+      }
+
+      .wrap {
+        position: relative;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 48px;
+      }
+
+      .panel {
+        width: min(1200px, 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 32px;
+        background: var(--panel);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 32px 120px rgba(0, 0, 0, 0.35);
+        padding: 48px 52px;
+      }
+
+      .eyebrow {
+        font-size: 14px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 24px;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 10ch;
+        font-size: clamp(64px, 9vw, 136px);
+        line-height: 0.9;
+        letter-spacing: -0.07em;
+      }
+
+      .sub {
+        margin-top: 20px;
+        max-width: 34ch;
+        font-size: clamp(20px, 2vw, 28px);
+        line-height: 1.35;
+        color: var(--muted);
+      }
+
+      .grid {
+        margin-top: 42px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        padding: 22px 24px;
+      }
+
+      .label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: rgba(236, 255, 248, 0.54);
+      }
+
+      .value {
+        margin-top: 12px;
+        font-size: clamp(26px, 3vw, 42px);
+        font-weight: 700;
+        letter-spacing: -0.05em;
+      }
+
+      .value.accent { color: var(--accent); }
+      .value.warm { color: var(--accent-2); }
+
+      .ticker {
+        margin-top: 28px;
+        padding-top: 22px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: clamp(16px, 1.5vw, 22px);
+        color: rgba(236, 255, 248, 0.78);
+        white-space: nowrap;
+      }
+
+      .ticker span {
+        display: inline-block;
+        padding-right: 2.5rem;
+        animation: drift 18s linear infinite;
+      }
+
+      @keyframes drift {
+        from { transform: translateX(0); }
+        to { transform: translateX(-50%); }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="panel">
+        <div class="eyebrow">Walla Page / Live Signal</div>
+        <h1>Everything is wired up.</h1>
+        <p class="sub">Custom domain is live, the wall is connected, and this scene was pushed from the CLI against <strong>walla.page</strong>.</p>
+        <div class="grid">
+          <article class="card">
+            <div class="label">Endpoint</div>
+            <div class="value accent">walla.page</div>
+          </article>
+          <article class="card">
+            <div class="label">Room Mode</div>
+            <div class="value">Live HTML</div>
+          </article>
+          <article class="card">
+            <div class="label">Status</div>
+            <div class="value warm">Streaming</div>
+          </article>
+        </div>
+        <div class="ticker">
+          <span>custom domain active • wall connected • cli linked to apex domain • live scene delivered • custom domain active • wall connected • cli linked to apex domain • live scene delivered •</span>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
