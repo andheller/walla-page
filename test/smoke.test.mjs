@@ -48,6 +48,29 @@ try {
   const refreshedMarkup = await refreshedPage.text();
   assert.match(refreshedMarkup, /id="display-overlay"/);
 
+  const landing = await fetch(`${BASE_URL}/`);
+  assert.equal(landing.status, 200);
+  const landingMarkup = await landing.text();
+  assert.match(landingMarkup, /How it works\./);
+  assert.match(landingMarkup, /\/demo\/campfire/);
+  assert.match(landingMarkup, /npm install -g walla-page/);
+  assert.doesNotMatch(landingMarkup, /🔔|🔥|📈|🕵️|☕|📌|⌘/);
+
+  const campfireDemo = await fetch(`${BASE_URL}/demo/campfire`);
+  assert.equal(campfireDemo.status, 200);
+  const campfireDemoMarkup = await campfireDemo.text();
+  assert.match(campfireDemoMarkup, /Enable sound/);
+  assert.match(campfireDemoMarkup, /campfire-demo\.mp3/);
+
+  const wallaboardDemo = await fetch(`${BASE_URL}/examples/wallaboard`);
+  assert.equal(wallaboardDemo.status, 200);
+  const wallaboardDemoMarkup = await wallaboardDemo.text();
+  assert.doesNotMatch(wallaboardDemoMarkup, /Enable sound/);
+
+  const campfireAudio = await fetch(`${BASE_URL}/audio/campfire-demo.mp3`);
+  assert.equal(campfireAudio.status, 200);
+  assert.equal(campfireAudio.headers.get("content-type"), "audio/mpeg");
+
   const ttsWithoutDisplay = await fetchTts(`${BASE_URL}/api/rooms/${roomId}/tts`, producerToken, {
     text: "This should not synthesize without a live display."
   });

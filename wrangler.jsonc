@@ -4,6 +4,16 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-03-30",
   "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    {
+      "pattern": "walla.page",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.walla.page",
+      "custom_domain": true
+    }
+  ],
   "durable_objects": {
     "bindings": [
       {
@@ -23,7 +33,7 @@
     "TTS_LIMIT": "50",
     "TTS_WINDOW_MS": "3600000",
     "TTS_MAX_WORDS": "60",
-    "DISPLAY_TOKEN_TTL_MS": "900000",
+    "DISPLAY_TOKEN_TTL_MS": "604800000",
     "PRODUCER_TOKEN_TTL_MS": "604800000"
   },
   "migrations": [

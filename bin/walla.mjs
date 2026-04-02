@@ -8,7 +8,7 @@ const CONFIG_DIR = path.join(os.homedir(), ".config", "wallapage");
 const CONFIG_PATH = path.join(CONFIG_DIR, "config.json");
 const LEGACY_CONFIG_PATH = path.join(os.homedir(), ".config", "wallapalooza", "config.json");
 const DEFAULT_TTS_MAX_WORDS = 60;
-const DEFAULT_SERVER = "https://wallapage.redo-page-8fa.workers.dev";
+const DEFAULT_SERVER = "https://walla.page";
 
 async function main() {
   const args = process.argv.slice(2);

@@ -1,3 +1,5 @@
+import { renderDemoDocument } from "./demo-page";
+
 type AmbientExample = {
   id: string;
   label: string;
@@ -92,16 +94,8 @@ export function ambientExamplePage(id: string) {
   return null;
 }
 
-function shell(title: string, body: string) {
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${title}</title>
-  </head>
-  <body>${body}</body>
-</html>`;
+function shell(title: string, body: string, demoId: string) {
+  return renderDemoDocument(title, body, demoId);
 }
 
 function wallaboardPage() {
@@ -245,16 +239,16 @@ function wallaboardPage() {
         text-align: center;
       }
       .flap-top .flap-char {
-        top: 0;
+        top: -10%;
       }
       .flap-bottom .flap-char {
-        top: -100%;
+        top: -110%;
       }
       .flap-flip-current .flap-char {
-        top: 0;
+        top: -10%;
       }
       .flap-flip-next .flap-char {
-        top: -100%;
+        top: -110%;
       }
       @keyframes topFlip {
         0% { transform: rotateX(0deg); }
@@ -363,7 +357,7 @@ function wallaboardPage() {
         render(frameForClock());
       }, 1000);
     </script>
-  `);
+  `, "wallaboard");
 }
 
 function nebulaPage() {
@@ -444,7 +438,7 @@ function nebulaPage() {
         requestAnimationFrame(render);
       }
     </script>
-  `);
+  `, "nebula");
 }
 
 function mosaicPage() {
@@ -529,5 +523,5 @@ function mosaicPage() {
       }
       update();
     </script>
-  `);
+  `, "mosaic");
 }

@@ -1,5 +1,65 @@
 import type { ScenePreset } from "../lib/types";
-import { ambientExamples } from "./examples";
+import { renderDemoDocument } from "./demo-page";
+import { wallaLogoMark } from "./logo";
+
+type FeaturedDemo = {
+  id: string;
+  href: string;
+  codeHref: string;
+  accent: string;
+  preview: "live" | "static";
+};
+
+const FEATURED_DEMOS: FeaturedDemo[] = [
+  {
+    id: "executive-dashboard",
+    href: "/demo/executive-dashboard",
+    codeHref: "https://github.com/andheller/walla-page/tree/main/examples",
+    accent: "#3b82f6",
+    preview: "live"
+  },
+  {
+    id: "campfire",
+    href: "/demo/campfire",
+    codeHref: "https://github.com/andheller/walla-page/blob/main/examples/campfire.html",
+    accent: "#ff7a18",
+    preview: "static"
+  },
+  {
+    id: "nebula",
+    href: "/examples/nebula",
+    codeHref: "https://github.com/andheller/walla-page/blob/main/examples/nebula.html",
+    accent: "#00d2ff",
+    preview: "live"
+  },
+  {
+    id: "mosaic",
+    href: "/examples/mosaic",
+    codeHref: "https://github.com/andheller/walla-page/blob/main/examples/mosaic.html",
+    accent: "#9b59b6",
+    preview: "live"
+  }
+];
+
+function featuredCard(demo: FeaturedDemo) {
+  return `<article class="demo-card">
+    <div class="demo-thumb concentric-28 ring-border" style="background:${demo.accent}15;">
+      ${demo.preview === "live"
+        ? `<div class="demo-frame-wrap">
+        <iframe data-demo-src="${demo.href}" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe>
+      </div>`
+        : `<div class="demo-static demo-static-image">
+        <img src="/brand/campfire-card.webp" alt="Campfire scene preview" loading="lazy" decoding="async" />
+        </div>`
+      }
+      <div class="demo-thumb-shade"></div>
+      <div class="demo-hover">
+        <a href="${demo.href}" target="_blank" rel="noreferrer" class="demo-action demo-action-primary">View Demo</a>
+        <a href="${demo.codeHref}" target="_blank" rel="noreferrer" class="demo-action">View Code</a>
+      </div>
+    </div>
+  </article>`;
+}
 
 function doc(title: string, body: string, config?: unknown, scriptPath?: string) {
   return `<!doctype html>
@@ -7,7 +67,8 @@ function doc(title: string, body: string, config?: unknown, scriptPath?: string)
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https: *.unsplash.com grainy-gradients.vercel.app; media-src 'self' blob:; connect-src 'self' ws: wss:; script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://rsms.me; font-src 'self' https://fonts.gstatic.com https://rsms.me; object-src 'none'; base-uri 'none'; frame-src 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https: *.unsplash.com grainy-gradients.vercel.app; media-src 'self' blob: data:; connect-src 'self' ws: wss:; script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://rsms.me; font-src 'self' https://fonts.gstatic.com https://rsms.me; object-src 'none'; base-uri 'none'; frame-src 'self'" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -47,13 +108,12 @@ function doc(title: string, body: string, config?: unknown, scriptPath?: string)
       .concentric-16 { border-radius: 16px; }
       
       header { height: 84px; display: flex; align-items: center; justify-content: space-between; }
-      .nav-links { display: flex; align-items: center; gap: 16px; font-weight: 550; font-size: 14px; letter-spacing: -0.01em; }
+      .nav-links { display: flex; align-items: center; gap: 18px; font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
       .nav-link { color: var(--muted); }
-      .nav-btn { padding: 10px 18px; background: var(--text); color: white; border-radius: 999px; font-size: 13px; font-weight: 600; }
 
       .hero { padding: 72px 0 88px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); gap: 72px; align-items: center; }
       .hero-title { 
-        font-size: clamp(42px, 5.6vw, 76px); 
+        font-size: clamp(40px, 5.1vw, 70px); 
         font-weight: 850; 
         line-height: 0.94; 
         letter-spacing: -0.045em; 
@@ -62,7 +122,56 @@ function doc(title: string, body: string, config?: unknown, scriptPath?: string)
         max-width: 12ch;
       }
       .hero-support { font-size: 19px; color: var(--muted); margin-top: 24px; max-width: 40ch; text-wrap: balance; line-height: 1.45; letter-spacing: -0.01em; }
-      .hero-actions { display: flex; gap: 16px; margin-top: 36px; }
+      .hero-actions { display: flex; margin-top: 36px; }
+      .install-pill {
+        width: min(100%, 380px);
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 54px;
+        align-items: center;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #ffffff, #f7f4ef);
+        box-shadow: 0 0 0 1px rgba(10, 10, 10, 0.12), 0 16px 40px -24px rgba(0, 0, 0, 0.28);
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .install-pill:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 0 0 1px rgba(10, 10, 10, 0.14), 0 22px 48px -24px rgba(0, 0, 0, 0.3);
+      }
+      .install-command {
+        display: block;
+        padding: 18px 22px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        color: #4d4a45;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .install-copy {
+        width: 40px;
+        height: 40px;
+        margin-right: 7px;
+        border: 0;
+        border-radius: 999px;
+        padding: 0;
+        display: grid;
+        place-items: center;
+        background: rgba(10, 10, 10, 0.04);
+        color: #6b675f;
+        cursor: pointer;
+        transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+      }
+      .install-copy:hover {
+        background: rgba(10, 10, 10, 0.08);
+        color: #0a0a0a;
+        transform: scale(1.02);
+      }
+      .install-copy svg {
+        width: 21px;
+        height: 21px;
+      }
       .hero-media { position: relative; }
       .hero-frame {
         aspect-ratio: 10 / 13;
@@ -132,41 +241,8 @@ function doc(title: string, body: string, config?: unknown, scriptPath?: string)
         max-width: 24ch;
       }
       
-      .btn-primary { 
-        padding: 18px 36px; 
-        background: var(--text); 
-        color: white; 
-        border-radius: 999px; 
-        font-weight: 600; 
-        font-size: 17px; 
-        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-      }
-      .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); opacity: 1; }
-      
-      .btn-secondary { 
-        padding: 18px 36px; 
-        border-radius: 999px; 
-        font-weight: 600; 
-        font-size: 17px; 
-        box-shadow: 0 0 0 1px var(--ring); 
-        transition: background 0.2s ease;
-      }
-      .btn-secondary:hover { background: #f9f9f9; opacity: 1; }
-
       .section-heading { margin-bottom: 64px; }
-      .eyebrow { 
-        font-family: 'JetBrains Mono', monospace; 
-        text-transform: uppercase; 
-        font-size: 12px; 
-        font-weight: 600;
-        letter-spacing: 0.4em; 
-        color: var(--accent); 
-        margin-bottom: 24px; 
-        display: block; 
-      }
       .section-title { font-size: 56px; font-weight: 850; letter-spacing: -0.04em; margin: 0; font-variation-settings: "opsz" 64; }
-      .statement-section { padding: 0 0 108px; }
       .statement-copy {
         max-width: 20ch;
         font-size: clamp(34px, 4.6vw, 58px);
@@ -182,21 +258,159 @@ function doc(title: string, body: string, config?: unknown, scriptPath?: string)
         font-weight: 400;
       }
 
-      .demo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
-      .demo-card { display: flex; flex-direction: column; gap: 24px; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-      .demo-card:hover { transform: translateY(-8px); opacity: 1; }
+      .demo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+      .demo-card {
+        min-width: 0;
+        display: block;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .demo-card:hover {
+        transform: translateY(-8px);
+        opacity: 1;
+      }
       .demo-thumb { 
-        aspect-ratio: 4/3; 
-        background: #f5f5f5; 
+        aspect-ratio: 4 / 3;
+        background: #f5f5f5;
         position: relative; 
         overflow: hidden; 
       }
-      .demo-label { font-size: 22px; font-weight: 750; letter-spacing: -0.03em; margin-bottom: 8px; }
-      .demo-desc { font-size: 16px; color: var(--muted); line-height: 1.6; }
-      .docs-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:32px; }
-      .docs-card { padding:40px; background:white; transition: transform 0.3s ease; }
+      .demo-frame-wrap {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        border-radius: inherit;
+      }
+      .demo-static {
+        position: absolute;
+        inset: 0;
+      }
+      .demo-frame-wrap iframe {
+        width: 400%;
+        height: 400%;
+        border: none;
+        transform: scale(0.25);
+        transform-origin: top left;
+        opacity: 0.9;
+        pointer-events: none;
+      }
+      .demo-thumb-shade {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.35));
+      }
+      .demo-hover {
+        position: absolute;
+        inset: auto 18px 18px 18px;
+        z-index: 2;
+        display: flex;
+        gap: 10px;
+      }
+      .demo-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 116px;
+        padding: 11px 14px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.16);
+        backdrop-filter: blur(14px);
+        color: white;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .demo-action-primary {
+        background: rgba(255,255,255,0.94);
+        border-color: rgba(255,255,255,0.94);
+        color: #080808;
+      }
+      .demo-static-image {
+        background: #050505;
+      }
+      .demo-static-image img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        object-position: center;
+      }
+      .docs-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:32px; }
+      .docs-card { padding:40px; background:white; transition: transform 0.3s ease; display:flex; flex-direction:column; }
       .docs-card:hover { transform: translateY(-4px); }
-      .docs-copy { font-size:15px; color:var(--muted); line-height:1.7; }
+      .docs-copy { font-size:15px; color:var(--muted); line-height:1.7; margin:0; }
+      .section-header-row {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+      }
+      .section-header-copy {
+        min-width: 0;
+      }
+      .section-cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 20px;
+        border-radius: 999px;
+        background: white;
+        box-shadow: 0 0 0 1px var(--ring);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .docs-command-pill {
+        width: 100%;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 40px;
+        align-items: center;
+        margin-top: auto;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #ffffff, #f7f4ef);
+        box-shadow: 0 0 0 1px rgba(10, 10, 10, 0.09), 0 14px 30px -26px rgba(0, 0, 0, 0.34);
+        overflow: hidden;
+      }
+      .docs-command {
+        display: block;
+        padding: 14px 18px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        color: #4d4a45;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .docs-copy-button {
+        width: 30px;
+        height: 30px;
+        margin-right: 5px;
+        border: 0;
+        border-radius: 999px;
+        padding: 0;
+        display: grid;
+        place-items: center;
+        background: rgba(10, 10, 10, 0.04);
+        color: #6b675f;
+        cursor: pointer;
+        transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+      }
+      .docs-copy-button:hover {
+        background: rgba(10, 10, 10, 0.08);
+        color: #0a0a0a;
+        transform: scale(1.02);
+      }
+      .docs-copy-button svg {
+        width: 17px;
+        height: 17px;
+      }
 
       footer { padding: 100px 0; border-top: 1px solid var(--ring); margin-top: 140px; }
       .footer-grid { display: grid; grid-template-columns: 1fr auto; gap: 80px; align-items: start; }
@@ -222,7 +436,6 @@ function doc(title: string, body: string, config?: unknown, scriptPath?: string)
         .hero-support { margin-left: auto; margin-right: auto; }
         .hero-actions { justify-content: flex-start; }
         .hero-media { max-width: 640px; }
-        .demo-grid { grid-template-columns: repeat(2, 1fr); }
         .docs-grid { grid-template-columns: repeat(2, 1fr); }
       }
       @media (max-width: 768px) {
@@ -230,12 +443,21 @@ function doc(title: string, body: string, config?: unknown, scriptPath?: string)
         header { height: auto; padding: 20px 0; align-items: flex-start; gap: 20px; }
         .nav-links { gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
         .hero { padding: 40px 0 72px; gap: 36px; }
-        .hero-actions { flex-direction: column; align-items: stretch; }
+        .hero-actions { align-items: stretch; }
+        .install-pill { width: 100%; }
+        .install-command { padding: 17px 18px; font-size: 13px; letter-spacing: 0.05em; }
         .hero-frame { padding: 18px; }
         .hero-video-copy strong { font-size: 22px; }
-        .statement-section { padding-bottom: 84px; }
         .footer-grid { grid-template-columns: 1fr; gap: 40px; text-align: center; justify-items: center; }
         .demo-grid { grid-template-columns: 1fr; }
+        .demo-action {
+          min-width: 0;
+          flex: 1 1 0;
+        }
+        .section-header-row {
+          align-items: flex-start;
+          flex-direction: column;
+        }
         .docs-grid { grid-template-columns: 1fr; }
         .hero-title { font-size: 48px; }
         .section-title { font-size: 40px; }
@@ -251,90 +473,47 @@ function doc(title: string, body: string, config?: unknown, scriptPath?: string)
 }
 
 export function landingPage(origin: string, presets: ScenePreset[]) {
-  const curatedPresetIds = new Set([
-    "monitoring-the-situation",
-    "executive-dashboard",
-    "morning-brief"
-  ]);
-  const curatedAmbientIds = new Set([
-    "wallaboard",
-    "nebula",
-    "mosaic",
-    "dot-matrix",
-    "station-board",
-    "ticker",
-    "transit-map",
-    "dinner-bell",
-    "campfire"
-  ]);
-  const presetLinks = presets
-    .filter((preset) => curatedPresetIds.has(preset.id))
-    .map((preset) => `<a href="/demo/${preset.id}" target="_blank" class="demo-card">
-      <div class="demo-thumb concentric-28 ring-border" style="background:${preset.accent}15;">
-        <div style="position:absolute; inset:0; pointer-events:none; overflow:hidden; border-radius:inherit;">
-          <iframe src="/demo/${preset.id}" scrolling="no" style="width:1600px; height:1200px; border:none; transform:scale(0.25); transform-origin:top left; opacity:0.8;"></iframe>
-        </div>
-        <div style="position:absolute; inset:0; background:linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.4));"></div>
-        <div style="position:absolute; top:24px; left:24px; width:44px; height:44px; border-radius:14px; background:white; display:grid; place-items:center; font-size:20px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index:2;">
-          ${preset.template === "focus" ? "⏰" : preset.template === "broadcast" ? "🔔" : preset.template === "poster" ? "📌" : preset.template === "campfire" ? "🔥" : preset.template === "terminal" ? "⌘" : preset.template === "monitoring" ? "🕵️" : preset.template === "dashboard" ? "📈" : preset.template === "lofi" ? "☕" : "✦"}
-        </div>
-        <div style="position:absolute; bottom:24px; left:24px; z-index:2;">
-          <div style="font-family:'JetBrains Mono', monospace; font-size:10px; font-weight:700; letter-spacing:0.2em; color:white; text-transform:uppercase; text-shadow: 0 1px 4px rgba(0,0,0,0.4);">Recipe: ${preset.template}</div>
-        </div>
-      </div>
-      <div style="padding: 0 4px;">
-        <div class="demo-label">${preset.label}</div>
-      </div>
-    </a>`)
-    .join("");
-  const ambientLinks = ambientExamples
-    .filter((example) => curatedAmbientIds.has(example.id))
-    .map((example) => `<a href="${example.href}" target="_blank" class="demo-card">
-      <div class="demo-thumb concentric-28 ring-border" style="background:${example.accent}18;">
-        <div style="position:absolute; inset:0; pointer-events:none; overflow:hidden; border-radius:inherit;">
-          <iframe src="${example.href}" scrolling="no" style="width:1600px; height:1200px; border:none; transform:scale(0.25); transform-origin:top left; opacity:0.9;"></iframe>
-        </div>
-        <div style="position:absolute; inset:0; background:linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.4));"></div>
-        <div style="position:absolute; top:24px; left:24px; width:44px; height:44px; border-radius:14px; background:white; display:grid; place-items:center; font-size:20px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index:2;">
-          ${example.id === "wallaboard" ? "▤" : example.id === "nebula" ? "✦" : example.id === "mosaic" ? "▦" : example.id === "dot-matrix" ? "⚃" : example.id === "station-board" ? "✈" : example.id === "ticker" ? "〰" : example.id === "transit-map" ? "⊚" : example.id === "dinner-bell" ? "🔔" : "🔥"}
-        </div>
-        <div style="position:absolute; bottom:24px; left:24px; z-index:2;">
-          <div style="font-family:'JetBrains Mono', monospace; font-size:10px; font-weight:700; letter-spacing:0.2em; color:white; text-transform:uppercase; text-shadow: 0 1px 4px rgba(0,0,0,0.4);">${example.eyebrow}</div>
-        </div>
-      </div>
-      <div style="padding: 0 4px;">
-        <div class="demo-label">${example.label}</div>
-      </div>
-    </a>`)
-    .join("");
-  const demoLinks = ambientLinks + presetLinks;
+  const demoLinks = FEATURED_DEMOS.map((demo) => featuredCard(demo)).join("");
 
   const body = `
     <header class="container">
       <div style="display:flex; align-items:center; gap:16px;">
         <div style="width:36px; height:36px; background:var(--text); border-radius:10px; display:grid; place-items:center;">
-          <div style="width:16px; height:16px; border:2.5px solid white; border-radius:3px;"></div>
+          ${wallaLogoMark()}
         </div>
         <span style="font-weight:850; font-size:22px; letter-spacing:-0.04em; font-variation-settings: 'opsz' 32;">Walla Page</span>
       </div>
       <nav class="nav-links">
-        <a href="https://github.com" target="_blank" rel="noreferrer" class="nav-btn">GitHub</a>
+        <a href="https://github.com/andheller/walla-page" target="_blank" rel="noreferrer" class="nav-link">GitHub</a>
+        <a href="https://www.npmjs.com/package/walla-page" target="_blank" rel="noreferrer" class="nav-link">npm</a>
       </nav>
     </header>
 
     <main>
       <section class="hero container">
         <div>
-          <span class="eyebrow">Cloudflare + ElevenLabs</span>
           <h1 class="hero-title">
-            Let your agent speak, show you things, and update one wall in real time.
+            Let your agent speak, show you things, and update your display in real time.
           </h1>
           <p class="hero-support">
             Open source wall control for agents: send fullscreen HTML, speak through ElevenLabs, and keep one screen in sync from a CLI, script, or tool.
           </p>
           <div class="hero-actions">
-            <a href="https://www.npmjs.com/package/walla-page" target="_blank" rel="noreferrer" class="btn-primary">npm ↗</a>
-            <a href="#examples" class="btn-secondary">View Demos</a>
+            <div class="install-pill">
+              <span class="install-command">$ npm install -g walla-page</span>
+              <button
+                type="button"
+                class="install-copy"
+                aria-label="Copy install command"
+                data-copy-button
+                data-copy-text="npm install -g walla-page"
+              >
+                <svg data-copy-icon viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.6"></rect>
+                  <path d="M15 9V7C15 5.89543 14.1046 5 13 5H7C5.89543 5 5 5.89543 5 7V13C5 14.1046 5.89543 15 7 15H9" stroke="currentColor" stroke-width="1.6"></path>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
         <div class="hero-media">
@@ -349,19 +528,10 @@ export function landingPage(origin: string, presets: ScenePreset[]) {
         </div>
       </section>
 
-      <section class="statement-section container">
-        <span class="eyebrow">Deadpan mode</span>
-        <h2 class="statement-copy">
+      <section id="examples" class="container" style="padding:0 0 120px;">
+        <h2 class="statement-copy" style="margin:0 0 48px;">
           Use Walla Page to turn your wall into a dashboard that gives executives deeper insights into <span>critical business functions</span>.
         </h2>
-      </section>
-
-      <section id="examples" class="container" style="padding:0 0 120px;">
-        <div class="section-heading">
-          <span class="eyebrow">Selected demos</span>
-          <h2 class="section-title">A smaller set of stronger examples.</h2>
-          <p style="font-size:20px; color:var(--muted); margin-top:20px; max-width:44ch; letter-spacing: -0.01em;">A few polished wall treatments for rooms, ambient displays, and dead-serious executive theater.</p>
-        </div>
         <div class="demo-grid">
           ${demoLinks}
         </div>
@@ -370,21 +540,40 @@ export function landingPage(origin: string, presets: ScenePreset[]) {
       <section id="docs" style="background:#fafafa; padding:140px 0; border-top: 1px solid var(--ring); border-bottom: 1px solid var(--ring);">
         <div class="container">
           <div class="section-heading">
-            <span class="eyebrow">API & CLI</span>
-            <h2 class="section-title">Four primitives for one wall.</h2>
-            <p style="font-size:20px; color:var(--muted); margin-top:20px; max-width:42ch; letter-spacing:-0.01em;">The model is intentionally simple: show something now, schedule something later, say something out loud, or delete the room when the moment is done.</p>
+            <div class="section-header-row">
+              <div class="section-header-copy">
+                <h2 class="section-title">How it works.</h2>
+                <p style="font-size:20px; color:var(--muted); margin-top:20px; max-width:46ch; letter-spacing:-0.01em;">The core flow is simple: create a room, show something now, schedule something later, say something out loud, then delete the room when you are done.</p>
+              </div>
+              <a href="https://github.com/andheller/walla-page#readme" target="_blank" rel="noreferrer" class="section-cta">View Docs</a>
+            </div>
           </div>
           <div class="docs-grid">
             ${[
-              ["Show", "Push a fullscreen HTML scene to the wall immediately for status, ambient visuals, or a focused moment."],
-              ["Schedule", "Queue a scene for later so the wall changes at the right time without someone standing by."],
-              ["Say", "Use ElevenLabs voice to announce something important when the room needs attention."],
-              ["Delete", "Remove room state and disconnect clients when you want to reset or end a wall session."]
-            ].map(([action, copy]) => `
+              ["Create", "Start a room and get the display link for the wall.", "walla create"],
+              ["Show", "Put an HTML scene on the wall right now.", "walla show wall.html"],
+              ["Schedule", "Queue a scene to take over later.", "walla schedule wall.html --at +5m"],
+              ["Say", "Speak a short message through the wall.", "walla say \"Dinner soon.\""],
+              ["Delete", "Tear down the room and disconnect the wall.", "walla delete"]
+            ].map(([action, copy, command]) => `
               <div class="docs-card concentric-24 ring-border">
                 <div style="font-weight:850; font-size:24px; margin-bottom:16px; letter-spacing: -0.03em;">${action}</div>
                 <p class="docs-copy">${copy}</p>
-                <div style="margin-top:24px; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--accent); font-weight:600;">WALLA ${action.toUpperCase()}</div>
+                <div class="docs-command-pill">
+                  <span class="docs-command">$ ${command}</span>
+                  <button
+                    type="button"
+                    class="docs-copy-button"
+                    aria-label="Copy ${action.toLowerCase()} command"
+                    data-copy-button
+                    data-copy-text="${command}"
+                  >
+                    <svg data-copy-icon viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.6"></rect>
+                      <path d="M15 9V7C15 5.89543 14.1046 5 13 5H7C5.89543 5 5 5.89543 5 7V13C5 14.1046 5.89543 15 7 15H9" stroke="currentColor" stroke-width="1.6"></path>
+                    </svg>
+                  </button>
+                </div>
               </div>
             `).join("")}
           </div>
@@ -396,7 +585,9 @@ export function landingPage(origin: string, presets: ScenePreset[]) {
       <div class="footer-grid">
         <div style="display:flex; flex-direction:column; gap:24px;">
           <div style="display:flex; align-items:center; gap:16px;">
-            <div style="width:32px; height:32px; background:var(--text); border-radius:8px;"></div>
+            <div style="width:32px; height:32px; background:var(--text); border-radius:8px; display:grid; place-items:center;">
+              ${wallaLogoMark()}
+            </div>
             <span style="font-weight:850; font-size:20px; letter-spacing:-0.04em;">Walla Page</span>
           </div>
           <p class="footer-copy">
@@ -405,7 +596,7 @@ export function landingPage(origin: string, presets: ScenePreset[]) {
         </div>
         <div style="display:grid; gap:16px;">
           <div class="eyebrow" style="margin-bottom:0; font-size:10px;">Documentation</div>
-          <a href="https://github.com" target="_blank" rel="noreferrer" style="font-weight:600; font-size:14px;">GitHub</a>
+          <a href="https://github.com/andheller/walla-page" target="_blank" rel="noreferrer" style="font-weight:600; font-size:14px;">GitHub</a>
         </div>
       </div>
     </footer>
@@ -419,16 +610,11 @@ export function demoIndexPage(presets: ScenePreset[]) {
 }
 
 export function publicDemoPage(preset: ScenePreset, markup: string) {
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Walla Page Gallery / ${preset.label}</title>
-    <style>html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }</style>
-  </head>
-  <body>${markup}</body>
-</html>`;
+  return renderDemoDocument(
+    `Walla Page Gallery / ${preset.label}`,
+    `${markup}<style>html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }</style>`,
+    preset.id
+  );
 }
 
 export function notFoundPage() {
@@ -442,7 +628,7 @@ export function notFoundPage() {
       </div>
     </main>
   `;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Not Found / Walla Page</title><link rel="stylesheet" href="https://rsms.me/inter/inter.css"><style>*{box-sizing:border-box;-webkit-font-smoothing:antialiased}body{margin:0}</style></head><body>${body}</body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Not Found / Walla Page</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"/><link rel="stylesheet" href="https://rsms.me/inter/inter.css"><style>*{box-sizing:border-box;-webkit-font-smoothing:antialiased}body{margin:0}</style></head><body>${body}</body></html>`;
 }
 
 export function displayPage(roomId: string) {
@@ -453,10 +639,7 @@ export function displayPage(roomId: string) {
         <h1 style="font-size:clamp(52px,6vw,80px); font-weight:850; margin:0 0 20px; letter-spacing:-0.05em; line-height:1.05;">Your room&rsquo;s<br>live display.</h1>
         <p style="color:rgba(255,255,255,0.4); font-size:clamp(16px,1.6vw,20px); line-height:1.6; margin:0 0 40px; max-width:32ch; margin-left:auto; margin-right:auto; text-wrap:balance;">When someone activates a scene, it appears here fullscreen. This display needs one click before it can play sound.</p>
         <p id="display-status" style="color:rgba(255,255,255,0.25); font-size:clamp(13px,1.2vw,16px); line-height:1.6; margin:0 0 28px;"></p>
-        <div style="display:grid; gap:12px;">
-          <button id="display-overlay" class="btn-primary" style="background:white; color:black; border:none; width:100%; font-size:clamp(15px,1.4vw,18px); font-weight:600;">Click to start wall</button>
-          <button id="display-test-sound" style="background:transparent; color:white; border:1px solid rgba(255,255,255,0.18); width:100%; font-size:clamp(14px,1.2vw,16px); font-weight:600; border-radius:999px; padding:14px 18px; cursor:pointer;">Test sound</button>
-        </div>
+        <button id="display-overlay" class="btn-primary" style="background:white; color:black; border:none; width:100%; font-size:clamp(15px,1.4vw,18px); font-weight:600;">Click to start wall</button>
       </div>
       <iframe id="scene-frame" sandbox="allow-scripts" style="position:fixed; inset:0; width:100%; height:100%; border:0; display:none;"></iframe>
     </main>

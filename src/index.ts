@@ -1,10 +1,12 @@
 import { Context, Hono } from "hono";
 import { RoomDO } from "./durable/room";
 import { RateLimiterDO } from "./durable/rate-limiter";
-import { WALLA_LOGO_WEBP_BASE64 } from "./ui/logo";
+import { WALLA_LOGO_SVG } from "./ui/logo";
+import { CAMPFIRE_CARD_WEBP_BASE64 } from "./ui/campfire-card";
 import { getScenePreset, buildTemplateMarkup, scenePresets } from "./lib/templates";
 import { getBuiltinLoop } from "./lib/loops";
 import { TEST_HI_MP3_BASE64 } from "./lib/test-audio";
+import { CAMPFIRE_DEMO_MP3_BASE64 } from "./lib/campfire-audio";
 import { landingPage, displayPage, demoIndexPage, publicDemoPage, notFoundPage } from "./ui/pages";
 import { ambientExamplePage } from "./ui/examples";
 
@@ -68,6 +70,14 @@ app.get("/audio/*", async (c) => {
       }
     });
   }
+  if (soundId === "campfire-demo") {
+    return new Response(decodeBase64(CAMPFIRE_DEMO_MP3_BASE64), {
+      headers: {
+        "content-type": "audio/mpeg",
+        "cache-control": "public, max-age=31536000, immutable"
+      }
+    });
+  }
   const sound = getBuiltinLoop(soundId);
   if (!sound) {
     return c.text("Audio not found", 404);
@@ -84,8 +94,24 @@ app.get("/audio/*", async (c) => {
 
 app.get("/app/landing.js", (c) => c.body(landingScript, 200, { "content-type": "application/javascript; charset=utf-8" }));
 app.get("/app/display.js", (c) => c.body(displayScript, 200, { "content-type": "application/javascript; charset=utf-8" }));
-app.get("/brand/logo.webp", () =>
-  new Response(decodeBase64(WALLA_LOGO_WEBP_BASE64), {
+app.get("/brand/logo.svg", () =>
+  new Response(WALLA_LOGO_SVG, {
+    headers: {
+      "content-type": "image/svg+xml; charset=utf-8",
+      "cache-control": "public, max-age=31536000, immutable"
+    }
+  })
+);
+app.get("/favicon.svg", () =>
+  new Response(WALLA_LOGO_SVG, {
+    headers: {
+      "content-type": "image/svg+xml; charset=utf-8",
+      "cache-control": "public, max-age=31536000, immutable"
+    }
+  })
+);
+app.get("/brand/campfire-card.webp", () =>
+  new Response(decodeBase64(CAMPFIRE_CARD_WEBP_BASE64), {
     headers: {
       "content-type": "image/webp",
       "cache-control": "public, max-age=31536000, immutable"
@@ -362,11 +388,23 @@ function cTestSoundPage() {
     <script>
       const button = document.getElementById("play");
       const status = document.getElementById("status");
+      let audioContext;
       button.addEventListener("click", async () => {
         try {
-          const audio = new Audio("/audio/test-hi.mp3");
-          audio.volume = 1;
-          await audio.play();
+          audioContext = audioContext || new AudioContext();
+          await audioContext.resume();
+          const response = await fetch("/audio/test-hi.mp3");
+          if (!response.ok) {
+            throw new Error("audio fetch failed");
+          }
+          const buffer = await audioContext.decodeAudioData(await response.arrayBuffer());
+          const source = audioContext.createBufferSource();
+          const gain = audioContext.createGain();
+          gain.gain.value = 1;
+          source.buffer = buffer;
+          source.connect(gain);
+          gain.connect(audioContext.destination);
+          source.start(audioContext.currentTime + 0.12);
           status.textContent = "Test sound playing.";
         } catch (error) {
           status.textContent = "Sound failed to play in this browser.";
@@ -378,6 +416,57 @@ function cTestSoundPage() {
 }
 
 const landingScript = `
+const defaultIcon = '<rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.6"></rect>'
+  + '<path d="M15 9V7C15 5.89543 14.1046 5 13 5H7C5.89543 5 5 5.89543 5 7V13C5 14.1046 5.89543 15 7 15H9" stroke="currentColor" stroke-width="1.6"></path>';
+const successIcon = '<path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>';
+
+const demoFrames = Array.from(document.querySelectorAll("iframe[data-demo-src]"));
+const copyButtons = Array.from(document.querySelectorAll("[data-copy-button]"));
+
+function loadDemoFrame(frame) {
+  if (!(frame instanceof HTMLIFrameElement)) return;
+  if (frame.src) return;
+  const src = frame.dataset.demoSrc;
+  if (!src) return;
+  frame.src = src;
+}
+
+if ("IntersectionObserver" in window) {
+  const frameObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      loadDemoFrame(entry.target);
+      observer.unobserve(entry.target);
+    });
+  }, { rootMargin: "280px 0px" });
+
+  demoFrames.forEach((frame) => frameObserver.observe(frame));
+} else {
+  demoFrames.forEach(loadDemoFrame);
+}
+
+copyButtons.forEach((button) => {
+  const icon = button.querySelector("[data-copy-icon]");
+  const defaultLabel = button.getAttribute("aria-label") || "Copy command";
+  let resetTimer = null;
+
+  function setCopyState(copied) {
+    if (!icon) return;
+    icon.innerHTML = copied ? successIcon : defaultIcon;
+    button.setAttribute("aria-label", copied ? "Copied" : defaultLabel);
+  }
+
+  button.addEventListener("click", async () => {
+    const value = button.getAttribute("data-copy-text");
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      if (resetTimer) clearTimeout(resetTimer);
+      setCopyState(true);
+      resetTimer = setTimeout(() => setCopyState(false), 1400);
+    } catch {}
+  });
+});
 `;
 
 const displayScript = `
@@ -388,7 +477,6 @@ const shell = document.getElementById("display-shell");
 const card = document.getElementById("display-card");
 const statusEl = document.getElementById("display-status");
 const overlayButton = document.getElementById("display-overlay");
-const testSoundButton = document.getElementById("display-test-sound");
 let audioEnabled = false;
 let audioContext;
 let currentAudio;
@@ -399,6 +487,9 @@ let needsGesture = false;
 let hasStarted = false;
 let currentScene = null;
 let currentLoopState = null;
+let pendingSceneAudio = null;
+let currentAudioGain = null;
+const AUDIO_START_PAD_MS = 120;
 
 function setStatus(message) {
   if (statusEl) {
@@ -465,18 +556,77 @@ function hideOverlay() {
   overlayButton.style.display = "none";
 }
 
+function dataUrlToArrayBuffer(url) {
+  const match = /^data:.*?;base64,(.*)$/.exec(url);
+  if (!match) {
+    throw new Error("invalid data url");
+  }
+  const binary = atob(match[1]);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0)).buffer;
+}
+
+function stopCurrentClip() {
+  if (currentAudio) {
+    try {
+      currentAudio.stop();
+    } catch {}
+    currentAudio = null;
+  }
+  if (currentAudioGain) {
+    try {
+      currentAudioGain.disconnect();
+    } catch {}
+    currentAudioGain = null;
+  }
+}
+
+async function playBufferedClip(url, volume = 1) {
+  if (!audioEnabled || !audioContext) return false;
+  try {
+    stopCurrentClip();
+    const audioBytes = url.startsWith("data:audio/")
+      ? dataUrlToArrayBuffer(url)
+      : await fetch(url).then(async (response) => {
+          if (!response.ok) {
+            throw new Error("audio fetch failed");
+          }
+          return await response.arrayBuffer();
+        });
+    const audioBuffer = await audioContext.decodeAudioData(audioBytes);
+    const source = audioContext.createBufferSource();
+    const gain = audioContext.createGain();
+    gain.gain.value = volume;
+    source.buffer = audioBuffer;
+    source.connect(gain);
+    gain.connect(audioContext.destination);
+    source.start(audioContext.currentTime + AUDIO_START_PAD_MS / 1000);
+    source.addEventListener("ended", () => {
+      if (currentAudio === source) {
+        currentAudio = null;
+      }
+      if (currentAudioGain === gain) {
+        try {
+          gain.disconnect();
+        } catch {}
+        currentAudioGain = null;
+      }
+    });
+    currentAudio = source;
+    currentAudioGain = gain;
+    return true;
+  } catch {
+    stopCurrentClip();
+    return false;
+  }
+}
+
 async function playTestSound() {
   await unlockAudio();
-  try {
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio = null;
-    }
-    currentAudio = new Audio("/audio/test-hi.mp3");
-    currentAudio.volume = 1;
-    await currentAudio.play();
+  const played = await playBufferedClip("/audio/test-hi.mp3");
+  if (played) {
     setStatus("Test sound playing.");
-  } catch {
+    pendingSceneAudio = null;
+  } else {
     showOverlay("Click to enable sound");
   }
 }
@@ -492,19 +642,21 @@ function assetUrl(key) {
   return null;
 }
 
-async function playAudioForScene(scene) {
-  if (!scene?.audioAssetKey || !audioEnabled) return;
+async function playAudioForScene(scene, options = {}) {
+  if (!scene?.audioAssetKey) return;
+  if (!audioEnabled && !options.force) {
+    pendingSceneAudio = scene;
+    showOverlay("Click to start wall");
+    return;
+  }
   const url = assetUrl(scene.audioAssetKey);
   if (!url) return;
-  try {
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio = null;
-    }
-    currentAudio = new Audio(url);
-    currentAudio.volume = 1;
-    await currentAudio.play();
-  } catch {}
+  const played = await playBufferedClip(url);
+  if (played) {
+    pendingSceneAudio = null;
+  } else {
+    showOverlay("Click to enable sound");
+  }
 }
 
 async function applyLoop(loopState) {
@@ -604,10 +756,13 @@ async function handleGesture() {
     connect();
   }
   await unlockAudio();
+  if (pendingSceneAudio) {
+    await playAudioForScene(pendingSceneAudio, { force: true });
+  }
   if (currentLoopState) {
     await applyLoop(currentLoopState);
   }
-  if (currentScene) {
+  if (!pendingSceneAudio && currentScene) {
     await playAudioForScene(currentScene);
   }
   if (loopAudio && loopAudio.paused) {
@@ -618,6 +773,5 @@ async function handleGesture() {
 }
 
 overlayButton?.addEventListener("click", handleGesture);
-testSoundButton?.addEventListener("click", playTestSound);
 showOverlay("Click to start wall");
 `;
