@@ -1,0 +1,104 @@
+# Walla Page
+
+Walla Page is a smart wall for agents.
+
+It turns any browser-connected screen into a live surface an agent can control with HTML and audio.
+
+## Core Idea
+
+Use Walla Page when an agent should communicate outside the terminal or browser tab.
+
+Examples:
+- show a progress view on a spare monitor
+- speak when attention is needed
+- schedule a scene for a meeting or reminder
+- keep a room alive with scheduled scenes and brief speech
+
+## Core Actions
+
+- `show`: display fullscreen HTML now
+- `schedule`: display fullscreen HTML later
+- `say`: generate speech with ElevenLabs and schedule it
+
+## Mental Model
+
+- one room = one Cloudflare Durable Object
+- one wall screen connects to that room
+- a controller CLI, script, or agent sends updates to that room
+- visuals and audio are separate primitives
+- the display does not join automatically; a human starts the wall session on that screen
+
+Cloudflare Durable Objects keep each room stateful and real time.
+ElevenLabs provides voice generation for announcements.
+Built-in audio assets are served by the Worker audio route.
+
+## Preferred Agent Workflow
+
+1. Create or select a room.
+2. Open the display link on the wall screen.
+3. Use `walla` or the HTTP API to send scenes and audio.
+4. Treat HTML scenes as fullscreen, glanceable, non-scroll layouts.
+5. Use audio for attention, not constant narration.
+
+## CLI
+
+Main command: `walla`
+
+Important commands:
+
+```bash
+walla create
+walla display
+walla status
+walla show ./scene.html
+walla schedule ./scene.html --at +10m
+walla say "Build finished."
+walla delete
+walla delete --force
+walla quickstart
+```
+
+## Scene Guidance
+
+Good scenes:
+- fullscreen
+- simple
+- high contrast
+- one main idea
+- readable from across the room
+
+Avoid:
+- scrollable UIs
+- dense dashboards with tiny text
+- interactions that require keyboard or mouse
+- pages that depend on app state outside the room
+
+## Audio Guidance
+
+Use audio as a separate layer:
+- speech can happen without replacing the current scene
+- spoken messages should be brief and intentional
+- short sound effects are useful for alerts and transitions
+- keep spoken messages short; wall speech should be brief and intentional
+
+## Prompting Guidance
+
+Good prompt examples:
+
+- Make a beautiful ambient display for Walla Page that helps me monitor the situation.
+- Build a fullscreen HTML scene for a wall display. Large type. One main action. No scrolling.
+- Create a countdown scene for a meeting in 15 minutes. Add a calm, high-contrast visual treatment.
+- Make a progress wall for an agent run with a strong headline, big status, and one supporting detail.
+- Make a beautiful ambient display using walla.page that helps drive shareholder value. Make no mistakes.
+
+## Integration Guidance
+
+Walla Page is best used from:
+- a coding CLI
+- an agent runtime
+- a webhook or automation tool
+- a small script that posts scenes and audio to the API
+
+The browser wall is the receiver. The CLI or API is the sender.
+
+Demo gallery pages are static examples. They do not connect to a live room.

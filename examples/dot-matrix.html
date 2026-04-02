@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walla Matrix - Red LED</title>
+    <style>
+        :root {
+            --led-off: #200;
+            --led-on: #f00;
+            --led-glow: rgba(255, 0, 0, 0.6);
+            --bg: #050000;
+        }
+        body {
+            margin: 0;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .matrix-container {
+            padding: 40px;
+            background: #111;
+            border-radius: 10px;
+            box-shadow: 0 0 100px rgba(0,0,0,1), inset 0 0 20px rgba(255,0,0,0.1);
+            border: 4px solid #222;
+        }
+        .matrix {
+            display: grid;
+            grid-template-rows: repeat(7, 12px);
+            grid-auto-columns: 12px;
+            grid-auto-flow: column;
+            gap: 4px;
+        }
+        .led {
+            width: 12px;
+            height: 12px;
+            background: var(--led-off);
+            border-radius: 50%;
+            transition: background 0.05s;
+        }
+        .led.on {
+            background: var(--led-on);
+            box-shadow: 0 0 8px var(--led-glow), 0 0 15px var(--led-glow);
+        }
+    </style>
+</head>
+<body>
+
+<div class="matrix-container">
+    <div class="matrix" id="matrix"></div>
+</div>
+
+<script>
+    /* --- CONFIG --- */
+    const MESSAGE = "CRITICAL UPDATE: SYSTEM STABLE • ALL AGENTS ALIGNED • DINNER READY IN 10 MIN • ";
+    const WIDTH = 80; // Number of LEDs wide
+    const SPEED = 50; // ms per frame
+    
+    // Simple 5x7 font map (subset)
+    const FONT = {
+        'A': [0x7E, 0x11, 0x11, 0x11, 0x7E], 'B': [0x7F, 0x49, 0x49, 0x49, 0x36],
+        'C': [0x3E, 0x41, 0x41, 0x41, 0x22], 'D': [0x7F, 0x41, 0x41, 0x22, 0x1C],
+        'E': [0x7F, 0x49, 0x49, 0x49, 0x41], 'F': [0x7F, 0x09, 0x09, 0x09, 0x01],
+        'G': [0x3E, 0x41, 0x49, 0x49, 0x7A], 'H': [0x7F, 0x08, 0x08, 0x08, 0x7F],
+        'I': [0x00, 0x41, 0x7F, 0x41, 0x00], 'J': [0x20, 0x40, 0x41, 0x3F, 0x01],
+        'K': [0x7F, 0x08, 0x14, 0x22, 0x41], 'L': [0x7F, 0x40, 0x40, 0x40, 0x40],
+        'M': [0x7F, 0x02, 0x0C, 0x02, 0x7F], 'N': [0x7F, 0x04, 0x08, 0x10, 0x7F],
+        'O': [0x3E, 0x41, 0x41, 0x41, 0x3E], 'P': [0x7F, 0x09, 0x09, 0x09, 0x06],
+        'Q': [0x3E, 0x41, 0x51, 0x21, 0x5E], 'R': [0x7F, 0x09, 0x19, 0x29, 0x46],
+        'S': [0x46, 0x49, 0x49, 0x49, 0x31], 'T': [0x01, 0x01, 0x7F, 0x01, 0x01],
+        'U': [0x3F, 0x40, 0x40, 0x40, 0x3F], 'V': [0x1F, 0x20, 0x40, 0x20, 0x1F],
+        'W': [0x3F, 0x40, 0x38, 0x40, 0x3F], 'X': [0x63, 0x14, 0x08, 0x14, 0x63],
+        'Y': [0x07, 0x08, 0x70, 0x08, 0x07], 'Z': [0x61, 0x51, 0x49, 0x45, 0x43],
+        '0': [0x3E, 0x51, 0x49, 0x45, 0x3E], '1': [0x00, 0x42, 0x7F, 0x40, 0x00],
+        '2': [0x42, 0x61, 0x51, 0x49, 0x46], '3': [0x21, 0x41, 0x45, 0x4B, 0x31],
+        '4': [0x18, 0x14, 0x12, 0x7F, 0x10], '5': [0x27, 0x45, 0x45, 0x45, 0x39],
+        '6': [0x3C, 0x4A, 0x49, 0x49, 0x30], '7': [0x01, 0x71, 0x09, 0x05, 0x03],
+        '8': [0x36, 0x49, 0x49, 0x49, 0x36], '9': [0x06, 0x49, 0x49, 0x29, 0x1E],
+        ' ': [0x00, 0x00, 0x00], ':': [0x00, 0x36, 0x00], '.': [0x40, 0x00],
+        '-': [0x08, 0x08, 0x08], '•': [0x1C, 0x1C, 0x1C], '!': [0x00, 0x5F, 0x00]
+    };
+
+    const matrixEl = document.getElementById('matrix');
+    const leds = [];
+    
+    // Create LED elements
+    for (let c = 0; c < WIDTH; c++) {
+        for (let r = 0; r < 7; r++) {
+            const led = document.createElement('div');
+            led.className = 'led';
+            matrixEl.appendChild(led);
+            leds.push(led);
+        }
+    }
+
+    // Convert message to bit buffer
+    let buffer = [];
+    for (let char of MESSAGE.toUpperCase()) {
+        const glyph = FONT[char] || FONT[' '];
+        buffer.push(...glyph, 0); // glyph + 1px space
+    }
+
+    let offset = 0;
+    function draw() {
+        for (let c = 0; c < WIDTH; c++) {
+            const byte = buffer[(offset + c) % buffer.length];
+            for (let r = 0; r < 7; r++) {
+                const isOn = (byte >> r) & 1;
+                leds[c * 7 + r].className = isOn ? 'led on' : 'led';
+            }
+        }
+        offset = (offset + 1) % buffer.length;
+        setTimeout(draw, SPEED);
+    }
+
+    draw();
+</script>
+</body>
+</html>

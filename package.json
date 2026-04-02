@@ -1,0 +1,42 @@
+{
+  "name": "walla-page",
+  "version": "1.0.0",
+  "description": "CLI for controlling Walla Page rooms from Node.",
+  "type": "module",
+  "files": [
+    "bin",
+    "README.md",
+    "llms.txt"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "walla": "./bin/walla.mjs"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "tsc --noEmit",
+    "walla": "node ./bin/walla.mjs",
+    "test:smoke": "node test/smoke.test.mjs"
+  },
+  "keywords": [
+    "cloudflare",
+    "durable-objects",
+    "hono",
+    "elevenlabs",
+    "wall-display"
+  ],
+  "author": "",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260329.1",
+    "hono": "^4.10.1",
+    "typescript": "^6.0.2",
+    "wrangler": "^4.78.0"
+  }
+}

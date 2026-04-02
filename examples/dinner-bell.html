@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinner Bell - Walla Ambient</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #080808;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            /* Industrial vignette */
+            background-image: radial-gradient(circle at 50% 50%, #151515 0%, #000 80%);
+        }
+
+        .bell-container {
+            width: 400px;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.8));
+        }
+
+        .bell-body {
+            fill: url(#gold-gradient);
+            stroke: #4d3d00;
+            stroke-width: 0.5;
+            transform-origin: 50% 10%;
+            animation: ring 2.5s ease-in-out infinite;
+        }
+
+        .bell-clapper {
+            fill: #332b00;
+            transform-origin: 50% 10%;
+            animation: clapper-move 2.5s ease-in-out infinite;
+        }
+
+        @keyframes ring {
+            0%, 100% { transform: rotate(0deg); }
+            15% { transform: rotate(15deg); }
+            30% { transform: rotate(-12deg); }
+            45% { transform: rotate(10deg); }
+            60% { transform: rotate(-6deg); }
+            75% { transform: rotate(3deg); }
+        }
+
+        @keyframes clapper-move {
+            0%, 100% { transform: translateX(0); }
+            15% { transform: translateX(-15px); }
+            30% { transform: translateX(12px); }
+            45% { transform: translateX(-8px); }
+            60% { transform: translateX(5px); }
+            75% { transform: translateX(-2px); }
+        }
+
+        .status {
+            position: absolute;
+            bottom: -60px;
+            color: #444;
+            font-family: "Inter", sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.4em;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* Sound waves / pulse */
+        .pulse {
+            position: absolute;
+            border: 2px solid rgba(255, 215, 0, 0.2);
+            border-radius: 50%;
+            animation: pulse-out 2.5s ease-out infinite;
+        }
+
+        @keyframes pulse-out {
+            0% { width: 100px; height: 100px; opacity: 0.8; }
+            100% { width: 600px; height: 600px; opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bell-container">
+    <div class="pulse"></div>
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#ffd700;stop-opacity:1" />
+                <stop offset="50%" style="stop-color:#b8860b;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#ffd700;stop-opacity:1" />
+            </linearGradient>
+            <radialGradient id="gold-shine" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.4" />
+                <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
+            </radialGradient>
+        </defs>
+        
+        <!-- Clapper -->
+        <circle class="bell-clapper" cx="100" cy="160" r="12" />
+        
+        <!-- Bell Body -->
+        <g class="bell-body">
+            <path d="M100 20 C60 20 40 60 40 120 L30 145 C30 155 170 155 170 145 L160 120 C160 60 140 20 100 20 Z" />
+            <!-- Shine -->
+            <path d="M100 30 C75 30 65 55 65 100" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="4" stroke-linecap="round" />
+            <!-- Top loop -->
+            <path d="M85 20 Q100 0 115 20" fill="none" stroke="url(#gold-gradient)" stroke-width="6" />
+        </g>
+    </svg>
+</div>
+
+<script>
+    // Randomize the pulse slightly to feel more organic with the ring
+    const pulse = document.querySelector('.pulse');
+    pulse.addEventListener('animationiteration', () => {
+        pulse.style.opacity = Math.random() * 0.5 + 0.3;
+    });
+</script>
+</body>
+</html>

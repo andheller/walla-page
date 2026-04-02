@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WallaBoard - Ambient Display</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --board-bg: #111111;
+            --flap-bg: #1a1a1a;
+            --text-color: #ffffff;
+            --hinge-color: #000000;
+            --border-radius: 3px;
+            
+            /* Vestaboard Colors */
+            --v-red: #d63031;
+            --v-orange: #e17055;
+            --v-yellow: #fdcb6e;
+            --v-green: #00b894;
+            --v-blue: #0984e3;
+            --v-violet: #6c5ce7;
+            --v-white: #dfe6e9;
+            --v-black: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            font-family: "Inter", -apple-system, system-ui, sans-serif;
+            /* Industrial feel background */
+            background-image: 
+                radial-gradient(circle at 50% 10%, rgba(255,255,255,0.03) 0%, transparent 50%),
+                linear-gradient(180deg, #0a0a0a 0%, #000 100%);
+        }
+
+        .container {
+            perspective: 2000px;
+            padding: 60px;
+            background: linear-gradient(145deg, #151515, #0a0a0a);
+            border-radius: 40px;
+            box-shadow: 
+                0 100px 150px -50px rgba(0,0,0,0.8),
+                inset 0 1px 1px rgba(255,255,255,0.05);
+            position: relative;
+        }
+
+        /* Subtle ambient glow behind the board */
+        .container::before {
+            content: '';
+            position: absolute;
+            inset: 40px;
+            background: rgba(255,255,255,0.01);
+            filter: blur(40px);
+            z-index: 0;
+        }
+
+        .board {
+            display: grid;
+            grid-template-rows: repeat(6, 1fr);
+            gap: 8px;
+            background: #080808;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 
+                inset 0 0 50px rgba(0,0,0,0.9),
+                0 0 0 1px rgba(255,255,255,0.02);
+            position: relative;
+            z-index: 1;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(22, 1fr);
+            gap: 5px;
+        }
+
+        /* Flap Styles */
+        .flap {
+            position: relative;
+            width: 42px;
+            height: 64px;
+            perspective: 300px;
+            user-select: none;
+        }
+
+        .flap-top, .flap-bottom {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background-color: var(--flap-bg);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+
+        .flap-top {
+            top: 0;
+            z-index: 1;
+            border-bottom: 1px solid rgba(0,0,0,0.5);
+            background: linear-gradient(180deg, #222 0%, #1a1a1a 100%);
+        }
+
+        .flap-bottom {
+            bottom: 0;
+            z-index: 0;
+            align-items: flex-end;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            background: linear-gradient(180deg, #1a1a1a 0%, #151515 100%);
+            border-top: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .flap-leaf {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            z-index: 2;
+            transform-origin: bottom;
+            transition: transform 0.18s ease-in;
+            transform-style: preserve-3d;
+        }
+
+        .flap-leaf-front, .flap-leaf-back {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            background-color: var(--flap-bg);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+        }
+
+        .flap-leaf-front {
+            z-index: 2;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            background: linear-gradient(180deg, #222 0%, #1a1a1a 100%);
+            border-bottom: 1px solid rgba(0,0,0,0.3);
+        }
+
+        .flap-leaf-back {
+            transform: rotateX(-180deg);
+            z-index: 1;
+            align-items: flex-end;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            background: linear-gradient(0deg, #222 0%, #1a1a1a 100%);
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Characters */
+        .char {
+            font-size: 38px;
+            font-weight: 900;
+            line-height: 64px;
+            color: var(--text-color);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .char-top { transform: translateY(0); }
+        .char-bottom { transform: translateY(-32px); }
+
+        /* Hinge */
+        .flap::after {
+            content: '';
+            position: absolute;
+            top: calc(50% - 1px);
+            left: -1px;
+            right: -1px;
+            height: 2px;
+            background: var(--hinge-color);
+            z-index: 10;
+            box-shadow: 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        /* Animation */
+        .flipping .flap-leaf {
+            transform: rotateX(-180deg);
+        }
+
+        /* Colors */
+        .color-1 { --flap-bg: var(--v-red); --text-color: transparent; }
+        .color-2 { --flap-bg: var(--v-orange); --text-color: transparent; }
+        .color-3 { --flap-bg: var(--v-yellow); --text-color: transparent; }
+        .color-4 { --flap-bg: var(--v-green); --text-color: transparent; }
+        .color-5 { --flap-bg: var(--v-blue); --text-color: transparent; }
+        .color-6 { --flap-bg: var(--v-violet); --text-color: transparent; }
+        .color-7 { --flap-bg: var(--v-white); --text-color: transparent; }
+        .color-8 { --flap-bg: var(--v-black); --text-color: transparent; }
+
+        @media (max-width: 1200px) {
+            .container { transform: scale(0.7); }
+        }
+        @media (max-width: 800px) {
+            .container { transform: scale(0.4); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="board" id="board"></div>
+</div>
+
+<script>
+    const ROWS = 6;
+    const COLS = 22;
+    const CHARS = " ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%-+()=?/.,:;'\"".split("");
+    const COLORS = ["{1}", "{2}", "{3}", "{4}", "{5}", "{6}", "{7}", "{8}"];
+    const ALL_CHARS = [...CHARS, ...COLORS];
+
+    const boardEl = document.getElementById('board');
+    const flaps = [];
+
+    for (let r = 0; r < ROWS; r++) {
+        const rowEl = document.createElement('div');
+        rowEl.className = 'row';
+        flaps[r] = [];
+        for (let c = 0; c < COLS; c++) {
+            const flap = createFlap();
+            rowEl.appendChild(flap.el);
+            flaps[r][c] = flap;
+        }
+        boardEl.appendChild(rowEl);
+    }
+
+    function createFlap() {
+        const el = document.createElement('div');
+        el.className = 'flap';
+        el.innerHTML = `
+            <div class="flap-top"><div class="char char-top"> </div></div>
+            <div class="flap-bottom"><div class="char char-bottom"> </div></div>
+            <div class="flap-leaf">
+                <div class="flap-leaf-front"><div class="char char-top"> </div></div>
+                <div class="flap-leaf-back"><div class="char char-bottom"> </div></div>
+            </div>
+        `;
+
+        return {
+            el,
+            current: " ",
+            target: " ",
+            isFlipping: false,
+            update(char) {
+                if (this.current === char) return;
+                this.target = char;
+                this.step();
+            },
+            step() {
+                if (this.isFlipping) return;
+                if (this.current === this.target) return;
+
+                this.isFlipping = true;
+                const nextChar = ALL_CHARS[(ALL_CHARS.indexOf(this.current) + 1) % ALL_CHARS.length];
+
+                const topChar = this.el.querySelector('.flap-top .char');
+                const bottomChar = this.el.querySelector('.flap-bottom .char');
+                const leafFrontChar = this.el.querySelector('.flap-leaf-front .char');
+                const leafBackChar = this.el.querySelector('.flap-leaf-back .char');
+                const leaf = this.el.querySelector('.flap-leaf');
+
+                // Prepare
+                this.setChar(leafFrontChar, this.current);
+                this.setChar(leafBackChar, nextChar);
+                this.setChar(topChar, nextChar);
+                this.setChar(bottomChar, this.current);
+
+                this.el.classList.add('flipping');
+
+                setTimeout(() => {
+                    this.el.classList.remove('flipping');
+                    this.setChar(bottomChar, nextChar);
+                    this.current = nextChar;
+                    this.isFlipping = false;
+                    setTimeout(() => this.step(), 10 + Math.random() * 20);
+                }, 180);
+            },
+            setChar(el, char) {
+                const parent = el.closest('.flap-top, .flap-bottom, .flap-leaf-front, .flap-leaf-back');
+                parent.className = parent.className.replace(/\bcolor-\d\b/g, '');
+                if (char.startsWith('{')) {
+                    parent.classList.add(`color-${char.substring(1, 2)}`);
+                    el.textContent = "";
+                } else {
+                    el.textContent = char;
+                }
+            }
+        };
+    }
+
+    function setMessage(text) {
+        const lines = text.toUpperCase().split('\n');
+        for (let r = 0; r < ROWS; r++) {
+            const line = lines[r] || "";
+            for (let c = 0; c < COLS; c++) {
+                flaps[r][c].update(line[c] || " ");
+            }
+        }
+    }
+
+    const modes = [
+        () => {
+            const now = new Date();
+            const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            return ["", "", "      " + time, "", "", "{5}".repeat(COLS)].join('\n');
+        },
+        () => {
+            // Generative pattern
+            let m = "";
+            for(let r=0; r<6; r++) {
+                for(let c=0; c<COLS; c++) {
+                    m += (r + c) % 3 === 0 ? "{4}" : " ";
+                }
+                m += "\n";
+            }
+            return m;
+        },
+        () => {
+            let m = "";
+            for(let i=0; i<6; i++) m += `{${(i%8)+1}}`.repeat(COLS) + "\n";
+            return m;
+        }
+    ];
+
+    let modeIdx = 0;
+    setInterval(() => {
+        setMessage(modes[modeIdx]());
+        modeIdx = (modeIdx + 1) % modes.length;
+    }, 8000);
+    setMessage(modes[0]());
+</script>
+</body>
+</html>
